@@ -17,10 +17,10 @@
     <button class="nav-item" data-page="wiki"><span class="icon">▤</span><span data-i18n="wiki">Wiki</span></button>
     <button class="nav-item" data-page="settings"><span class="icon">⚙</span><span data-i18n="settings">Einstellungen</span></button>
   </nav>
-  <div class="sidebar-bottom"><div class="status-dot"></div><div><strong>ASTRO</strong><small data-i18n="online">Launcher online</small></div></div>
+  <div class="sidebar-bottom"><div class="status-dot"></div><div><strong>ASTRO</strong><small><span data-i18n="online">Launcher online</span> · <span id="sidebarVersion">v1.0</span></small></div></div>
 </aside>
 <main class="content">
-<header class="topbar"><div class="drag-area"></div><button class="update-check-btn" id="checkUpdateBtn" type="button" data-i18n="checkUpdates">Update suchen</button><span class="version" id="version">v1.0.0</span><button class="window-btn" id="fullscreenBtn" title="Fullscreen">□</button><button class="window-btn" id="minBtn" title="Minimize">—</button><button class="window-btn close" id="closeBtn" title="Close">×</button></header>
+<header class="topbar"><div class="drag-area"></div><button class="update-check-btn" id="checkUpdateBtn" type="button" data-i18n="checkUpdates">Update suchen</button><span class="version-badge" id="version">v1.0</span><button class="window-btn" id="fullscreenBtn" title="Fullscreen">□</button><button class="window-btn" id="minBtn" title="Minimize">—</button><button class="window-btn close" id="closeBtn" title="Close">×</button></header>
 <section class="page active" id="page-games">
   <div class="hero-card" id="heroCard"><div class="hero-logo"><img src="assets/astro-logo.png"><span>ASTRO</span></div><div class="hero-copy"><div class="hero-label" data-i18n="nowPlaying">Jetzt spielen:</div><div class="players">♟ <strong>0</strong></div></div></div>
   <div class="columns">
@@ -52,7 +52,7 @@
        <p data-i18n="languageHint">Die Sprache wird lokal im Launcher gespeichert.</p>
      </div>
      <div class="settings-card">
-       <label data-i18n="updatesLabel">Auto-Updater (GitHub)</label>
+       <div class="update-header-row"><label data-i18n="updatesLabel">Auto-Updater (GitHub)</label><span class="version-badge settings-ver" id="settingsVersionBadge">v1.0</span></div>
        <div class="update-status-box" id="updateStatusText" data-i18n="updateIdle">Prüft automatisch beim Start auf neue Updates.</div>
        <div class="update-progress-track" id="updateProgressTrack" aria-hidden="true"><div class="update-progress-fill" id="updateProgressFill"></div></div>
        <button class="save-btn" id="settingsUpdateBtn" type="button" data-i18n="checkUpdates">Update suchen</button>

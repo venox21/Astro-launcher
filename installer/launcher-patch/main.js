@@ -16,7 +16,7 @@ function loadConfig() {
     return {
       serverName: 'ASTRO',
       servers: { de: { name: 'Server #1 | DE', address: '127.0.0.1:30120' }, en: { name: 'Server #1 | EN', address: '127.0.0.1:30121' } },
-      version: app.getVersion(),
+      version: 'v1.0',
       discord: 'https://discord.gg/hTQmhY35V2',
       website: '',
       news: [],
@@ -132,7 +132,7 @@ async function runUpdateCheck(manual = false) {
     return { ok: true, skipped: true };
   }
 
-  const currentVersion = normalizeVersion(cfg.version || app.getVersion());
+  const currentVersion = normalizeVersion(cfg.version || '1.0');
 
   return await updater.checkAndUpdate({
     currentVersion,

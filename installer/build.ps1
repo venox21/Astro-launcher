@@ -1,6 +1,8 @@
 [CmdletBinding()]
 param(
-    [string]$OutputPath
+    [string]$OutputPath,
+    [switch]$Bump,
+    [string]$SetVersion
 )
 
 $ErrorActionPreference = 'Stop'
@@ -9,6 +11,8 @@ $InstallerRoot = $PSScriptRoot
 $LauncherRoot = Split-Path -Parent $InstallerRoot
 $BuildDir = Join-Path $InstallerRoot 'build'
 $PayloadZip = Join-Path $BuildDir 'payload.zip'
+$VersionFile = Join-Path $InstallerRoot 'version.txt'
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
 if (-not $OutputPath) {
     $OutputPath = Join-Path $LauncherRoot 'ASTRO Launcher Setup.exe'
@@ -18,30 +22,56 @@ if (-not (Test-Path (Join-Path $LauncherRoot 'ASTRO Launcher.exe'))) {
     throw "ASTRO Launcher.exe wurde nicht in '$LauncherRoot' gefunden."
 }
 
-# Read version from resources\config.json (fallback to 1.0.0)
-$version = '1.0.0'
+# Resolve display version (1.0 -> 1.1 -> 1.2 ...) and assembly version (1.0.0 -> 1.1.0 ...)
+$displayVersion = '1.0'
 $configPath = Join-Path $LauncherRoot 'resources\config.json'
-if (Test-Path $configPath) {
+
+if (Test-Path $VersionFile) {
+    $raw = (Get-Content -Path $VersionFile -Raw -Encoding UTF8).Trim().TrimStart('v', 'V')
+    if ($raw -match '^(\d+)\.(\d+)(?:\.\d+)?$') {
+        $displayVersion = "$($Matches[1]).$($Matches[2])"
+    }
+}
+elseif (Test-Path $configPath) {
     try {
         $cfg = Get-Content -Path $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
         if ($cfg.version) {
-            $raw = ([string]$cfg.version).Trim()
-            if ($raw.StartsWith('v', [System.StringComparison]::OrdinalIgnoreCase)) {
-                $raw = $raw.Substring(1)
-            }
-            if ($raw -match '^\d+\.\d+\.\d+$') {
-                $version = $raw
+            $raw = ([string]$cfg.version).Trim().TrimStart('v', 'V')
+            if ($raw -match '^(\d+)\.(\d+)(?:\.\d+)?$') {
+                $displayVersion = "$($Matches[1]).$($Matches[2])"
             }
         }
     }
     catch {
-        Write-Warning "Konnte Version nicht aus config.json lesen, verwende $version."
+        Write-Warning "Konnte Version nicht aus config.json lesen, verwende $displayVersion."
     }
 }
 
-Write-Host "[1/4] Baue ASTRO Uninstaller (v$version) ..." -ForegroundColor Cyan
+if ($SetVersion) {
+    $rawSet = $SetVersion.Trim().TrimStart('v', 'V')
+    if ($rawSet -notmatch '^(\d+)\.(\d+)$') {
+        throw "Ungueltige Version '$SetVersion'. Erwartet z.B. '1.0' oder '1.1'."
+    }
+    $displayVersion = "$($Matches[1]).$($Matches[2])"
+}
+elseif ($Bump) {
+    if ($displayVersion -match '^(\d+)\.(\d+)$') {
+        $nextMinor = [int]$Matches[2] + 1
+        $displayVersion = "$($Matches[1]).$nextMinor"
+    }
+}
+
+if ($displayVersion -notmatch '^(\d+)\.(\d+)$') {
+    $displayVersion = '1.0'
+}
+$null = $displayVersion -match '^(\d+)\.(\d+)$'
+$assemblyVersion = "$($Matches[1]).$($Matches[2]).0"
+
+[System.IO.File]::WriteAllText($VersionFile, "$displayVersion`n", $utf8NoBom)
+
+Write-Host "[1/4] Baue ASTRO Uninstaller (v$displayVersion) ..." -ForegroundColor Cyan
 $uninstallerProj = Join-Path $InstallerRoot 'src\AstroUninstaller\AstroUninstaller.csproj'
-& dotnet build $uninstallerProj -c Release "-p:AstroVersion=$version" -v minimal
+& dotnet build $uninstallerProj -c Release "-p:AstroVersion=$assemblyVersion" "-p:AstroDisplayVersion=$displayVersion" -v minimal
 if ($LASTEXITCODE -ne 0) {
     throw "Build von AstroUninstaller fehlgeschlagen."
 }
@@ -74,6 +104,7 @@ else {
 $stagedConfig = Join-Path $BuildDir 'config.json'
 if (Test-Path $configPath) {
     $cfgObj = Get-Content -Path $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    $cfgObj.version = "v$displayVersion"
     if (-not $cfgObj.update) {
         $cfgObj | Add-Member -NotePropertyName update -NotePropertyValue ([pscustomobject]@{})
     }
@@ -84,8 +115,16 @@ if (Test-Path $configPath) {
     $cfgObj.update.enabled = $true
     $cfgObj.update.checkOnStartup = $true
     $cfgObj.update.provider = 'github'
-    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-    [System.IO.File]::WriteAllText($stagedConfig, ($cfgObj | ConvertTo-Json -Depth 10), $utf8NoBom)
+    $jsonOut = $cfgObj | ConvertTo-Json -Depth 10
+    [System.IO.File]::WriteAllText($stagedConfig, $jsonOut, $utf8NoBom)
+    if ($Bump -or $SetVersion) {
+        try {
+            [System.IO.File]::WriteAllText($configPath, $jsonOut, $utf8NoBom)
+        }
+        catch {
+            Write-Warning "Konnte root config.json nicht aktualisieren (im Setup-Paket ist v$displayVersion dennoch enthalten)."
+        }
+    }
 }
 
 $stagedAppUpdate = Join-Path $BuildDir 'app-update.yml'
@@ -167,9 +206,9 @@ finally {
 $zipSizeMb = [Math]::Round((Get-Item $PayloadZip).Length / 1MB, 2)
 Write-Host "      $fileCount Dateien komprimiert -> $zipSizeMb MB" -ForegroundColor Gray
 
-Write-Host "[3/4] Baue Single-File ASTRO Launcher Setup.exe ..." -ForegroundColor Cyan
+Write-Host "[3/4] Baue Single-File ASTRO Launcher Setup.exe (v$displayVersion) ..." -ForegroundColor Cyan
 $installerProj = Join-Path $InstallerRoot 'src\AstroInstaller\AstroInstaller.csproj'
-& dotnet build $installerProj -c Release "-p:AstroVersion=$version" "-p:PayloadZipPath=$PayloadZip" -v minimal
+& dotnet build $installerProj -c Release "-p:AstroVersion=$assemblyVersion" "-p:AstroDisplayVersion=$displayVersion" "-p:PayloadZipPath=$PayloadZip" -v minimal
 if ($LASTEXITCODE -ne 0) {
     throw "Build von AstroInstaller fehlgeschlagen."
 }

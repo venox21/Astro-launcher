@@ -22,6 +22,11 @@ powershell -ExecutionPolicy Bypass -File installer\build.ps1
 Dadurch wird eine fertige Single-File `ASTRO Launcher Setup.exe` erstellt.
 
 ## Neues Update auf GitHub veröffentlichen
-1. Version in `resources/config.json` erhöhen (z. B. `"version": "v1.0.1"`).
-2. `powershell -ExecutionPolicy Bypass -File installer\build.ps1` ausführen.
-3. Unter **Releases → Draft a new release** ein neues Release (Tag z. B. `v1.0.1`) anlegen und die gebaute `ASTRO Launcher Setup.exe` als Asset anhängen.
+Die Version startet bei `v1.0` und zählt bei jedem Update um 1 hoch (`v1.0` → `v1.1` → `v1.2` …):
+
+1. Build mit automatischem Versions-Sprung starten:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File installer\build.ps1 -Bump
+   ```
+   *(Erhöht `installer/version.txt` und `resources/config.json` automatisch z. B. von `1.0` auf `1.1` und baut die neue `ASTRO Launcher Setup.exe`.)*
+2. Unter **Releases → Draft a new release** ein neues Release mit passendem Tag (z. B. `v1.1`) anlegen und die gebaute `ASTRO Launcher Setup.exe` als Asset anhängen.

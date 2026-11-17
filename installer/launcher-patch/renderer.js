@@ -206,7 +206,19 @@ function setDownloadProgress(percent, visible) {
 }
 
 function cleanVersionLabel(ver) {
-  return String(ver || config.version || '1.0.0').replace(/^v/i, '');
+  const raw = String(ver || config.version || '1.0').trim().replace(/^v/i, '');
+  const parts = raw.split('.');
+  if (parts.length === 3 && parts[2] === '0') {
+    return `${parts[0]}.${parts[1]}`;
+  }
+  return raw || '1.0';
+}
+
+function updateVersionDisplays(ver) {
+  const label = 'v' + cleanVersionLabel(ver);
+  if ($('#version')) $('#version').textContent = label;
+  if ($('#sidebarVersion')) $('#sidebarVersion').textContent = label;
+  if ($('#settingsVersionBadge')) $('#settingsVersionBadge').textContent = label;
 }
 
 window.astro.onUpdateStatus(d => {
@@ -274,7 +286,7 @@ async function triggerManualUpdateCheck() {
 
 async function init() {
   config = await window.astro.getConfig();
-  $('#version').textContent = config.version || 'v1.0.0';
+  updateVersionDisplays(config.version || '1.0');
   $('#deServerName').textContent = servers().de.name;
   $('#enServerName').textContent = servers().en.name;
   updateLastServer();
