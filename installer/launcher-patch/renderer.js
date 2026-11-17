@@ -12,6 +12,7 @@ const T = {
     play: 'Spielen',
     news: 'Nachrichten',
     discord: 'Discord',
+    forum: 'Forum',
     topup: 'Konto aufladen',
     wiki: 'Wiki',
     settings: 'Einstellungen',
@@ -52,6 +53,7 @@ const T = {
     play: 'Play',
     news: 'News',
     discord: 'Discord',
+    forum: 'Forum',
     topup: 'Top up account',
     wiki: 'Wiki',
     settings: 'Settings',
@@ -316,6 +318,7 @@ async function init() {
     toast(t('saved'));
   };
   $('#discordBtn').onclick = () => window.astro.openExternal(config.discord || 'https://discord.gg/hTQmhY35V2');
+  $('#forumBtn').onclick = () => window.astro.openExternal(config.forum || 'https://gta5astro.eu/');
   $('#topupBtn').onclick = () => toast(t('topupSoon'));
   $('#videoBtn').onclick = () =>
     config.website && config.website !== 'https://example.com'

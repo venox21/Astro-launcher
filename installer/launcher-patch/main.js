@@ -18,6 +18,7 @@ function loadConfig() {
       servers: { de: { name: 'Server #1 | DE', address: '127.0.0.1:30120' }, en: { name: 'Server #1 | EN', address: '127.0.0.1:30121' } },
       version: 'v1.0',
       discord: 'https://discord.gg/hTQmhY35V2',
+      forum: 'https://gta5astro.eu/',
       website: '',
       news: [],
       update: {
