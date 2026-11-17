@@ -1,0 +1,19 @@
+# Electron runtime binaries (>100 MB files are published via GitHub Releases)
+ASTRO Launcher.exe
+ASTRO Launcher Setup.exe
+Uninstall ASTRO Launcher.exe
+*.dll
+*.pak
+*.dat
+*.bin
+*.exe
+locales/
+resources/
+LICENSE.electron.txt
+LICENSES.chromium.html
+vk_swiftshader_icd.json
+
+# Installer build & .NET compiler outputs
+installer/build/
+installer/src/**/bin/
+installer/src/**/obj/

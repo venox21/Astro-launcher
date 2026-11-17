@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>ASTRO Launcher Setup</AssemblyName>
+    <RootNamespace>AstroInstaller</RootNamespace>
+    <ApplicationIcon>..\..\assets\astro.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version Condition="'$(AstroVersion)' != ''">$(AstroVersion)</Version>
+    <Version Condition="'$(AstroVersion)' == ''">1.0.0</Version>
+    <Product>ASTRO Launcher Setup</Product>
+    <Company>ASTRO</Company>
+    <Authors>ASTRO</Authors>
+    <Copyright>Copyright © 2026 ASTRO</Copyright>
+    <PayloadZipPath Condition="'$(PayloadZipPath)' == ''">..\..\build\payload.zip</PayloadZipPath>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Common\*.cs" LinkBase="Common" />
+    <EmbeddedResource Include="..\..\assets\astro-logo-256.png" LogicalName="AstroInstaller.astro-logo-256.png" />
+    <EmbeddedResource Include="$(PayloadZipPath)" LogicalName="AstroInstaller.payload.zip" Condition="Exists('$(PayloadZipPath)')" />
+  </ItemGroup>
+</Project>
