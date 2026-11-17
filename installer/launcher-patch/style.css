@@ -187,7 +187,6 @@ nav { display:flex; flex-direction:column; gap:7px; }
   width:0%; height:100%; transition:width .12s linear;
   background:linear-gradient(90deg,#00e5ff,#007bff);
 }
-.update-repo-hint { font-size:11px; color:#5e727a; margin-bottom:0; }
 
 .toast {
   position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);opacity:0;pointer-events:none;
