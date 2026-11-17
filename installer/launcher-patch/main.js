@@ -1,8 +1,17 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { spawn, execFileSync } = require('child_process');
+const { spawn } = require('child_process');
 const { createUpdater, normalizeVersion } = require('./updater');
+const {
+  loadSettings,
+  saveSettings,
+  findFiveM,
+  resolveFiveMAppDir,
+  getCacheStats,
+  clearFiveMCache,
+  findFiveMLogsTarget
+} = require('./settings');
 
 let mainWindow;
 const updater = createUpdater();
@@ -30,6 +39,24 @@ function loadConfig() {
       }
     };
   }
+}
+
+function getLauncherInstallDir() {
+  return path.dirname(process.execPath);
+}
+
+function getFiveMStatus() {
+  const settings = loadSettings(app.getPath('userData'));
+  const fiveMExe = findFiveM(settings.customFiveMPath);
+  const fiveMAppDir = resolveFiveMAppDir(fiveMExe);
+  const cache = getCacheStats(fiveMAppDir);
+  return {
+    installed: Boolean(fiveMExe),
+    path: fiveMExe || null,
+    appDir: fiveMAppDir || null,
+    customPath: settings.customFiveMPath || '',
+    cacheMb: cache.mb
+  };
 }
 
 function createWindow() {
@@ -66,44 +93,6 @@ function sendUpdateStatus(status, data = {}) {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('update-status', { status, ...data });
   }
-}
-
-function findFiveM() {
-  const localAppData = process.env.LOCALAPPDATA || '';
-  const appData = process.env.APPDATA || '';
-  const programFiles = process.env.ProgramFiles || '';
-  const programFilesX86 = process.env['ProgramFiles(x86)'] || '';
-
-  const candidates = [
-    path.join(localAppData, 'FiveM', 'FiveM.app', 'FiveM.exe'),
-    path.join(localAppData, 'FiveM', 'FiveM.app', 'FiveM_bXXXX_GTAProcess.exe'),
-    path.join(localAppData, 'FiveM', 'FiveM.exe'),
-    path.join(appData, 'FiveM', 'FiveM.app', 'FiveM.exe'),
-    path.join(appData, 'FiveM', 'FiveM.exe'),
-    path.join(programFiles, 'FiveM', 'FiveM.app', 'FiveM.exe'),
-    path.join(programFiles, 'FiveM', 'FiveM.exe'),
-    path.join(programFilesX86, 'FiveM', 'FiveM.app', 'FiveM.exe'),
-    path.join(programFilesX86, 'FiveM', 'FiveM.exe')
-  ];
-
-  for (const candidate of candidates) {
-    try {
-      if (fs.existsSync(candidate) && path.basename(candidate).toLowerCase() === 'fivem.exe') {
-        return candidate;
-      }
-    } catch {}
-  }
-
-  try {
-    const result = execFileSync('where.exe', ['FiveM.exe'], {
-      windowsHide: true,
-      encoding: 'utf8'
-    });
-    const found = result.split(/\r?\n/).map(x => x.trim()).find(Boolean);
-    if (found && fs.existsSync(found)) return found;
-  } catch {}
-
-  return null;
 }
 
 async function connectToFiveM(address) {
@@ -163,7 +152,10 @@ function setupStartupUpdateCheck() {
   mainWindow.webContents.once('did-finish-load', () => {
     const cfg = loadConfig();
     const update = cfg.update || {};
-    if (update.enabled === false || update.checkOnStartup === false) return;
+    const settings = loadSettings(app.getPath('userData'));
+    if (update.enabled === false || update.checkOnStartup === false || settings.autoCheckUpdates === false) {
+      return;
+    }
 
     setTimeout(() => {
       runUpdateCheck(false).catch(() => {});
@@ -173,6 +165,27 @@ function setupStartupUpdateCheck() {
 
 app.whenReady().then(() => {
   ipcMain.handle('get-config', () => loadConfig());
+
+  ipcMain.handle('get-settings', () => {
+    const settings = loadSettings(app.getPath('userData'));
+    const installDir = getLauncherInstallDir();
+    const uninstallerExists = fs.existsSync(path.join(installDir, 'Uninstall ASTRO Launcher.exe'));
+    return {
+      ...settings,
+      installDir,
+      canUninstall: uninstallerExists
+    };
+  });
+
+  ipcMain.handle('save-settings', (_event, patch) => {
+    const updated = saveSettings(app.getPath('userData'), patch);
+    if (patch && Object.prototype.hasOwnProperty.call(patch, 'openAtLogin') && app.isPackaged) {
+      try {
+        app.setLoginItemSettings({ openAtLogin: updated.openAtLogin });
+      } catch {}
+    }
+    return updated;
+  });
 
   ipcMain.on('window-minimize', event => {
     BrowserWindow.fromWebContents(event.sender)?.minimize();
@@ -192,9 +205,72 @@ app.whenReady().then(() => {
   ipcMain.on('window-toggle-maximize', toggleMaximize);
   ipcMain.on('window-toggle-fullscreen', toggleMaximize);
 
-  ipcMain.handle('check-fivem-installed', () => {
-    const fiveMPath = findFiveM();
-    return { installed: Boolean(fiveMPath), path: fiveMPath || null };
+  ipcMain.handle('check-fivem-installed', () => getFiveMStatus());
+
+  ipcMain.handle('browse-fivem-path', async () => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: 'FiveM.exe auswählen',
+      properties: ['openFile'],
+      filters: [{ name: 'FiveM Executable', extensions: ['exe'] }]
+    });
+    if (result.canceled || !result.filePaths || result.filePaths.length === 0) {
+      return { canceled: true, status: getFiveMStatus() };
+    }
+    const chosen = result.filePaths[0];
+    saveSettings(app.getPath('userData'), { customFiveMPath: chosen });
+    return { canceled: false, status: getFiveMStatus() };
+  });
+
+  ipcMain.handle('reset-fivem-path', () => {
+    saveSettings(app.getPath('userData'), { customFiveMPath: '' });
+    return getFiveMStatus();
+  });
+
+  ipcMain.handle('clear-fivem-cache', () => {
+    const status = getFiveMStatus();
+    const res = clearFiveMCache(status.appDir);
+    return { ...res, status: getFiveMStatus() };
+  });
+
+  ipcMain.handle('open-fivem-folder', async () => {
+    const status = getFiveMStatus();
+    const target = status.appDir || (status.path ? path.dirname(status.path) : null);
+    if (!target || !fs.existsSync(target)) {
+      return { ok: false, code: 'FIVEM_NOT_FOUND' };
+    }
+    const err = await shell.openPath(target);
+    return { ok: !err, error: err || null };
+  });
+
+  ipcMain.handle('open-fivem-logs', async () => {
+    const status = getFiveMStatus();
+    const target = findFiveMLogsTarget(status.appDir);
+    if (!target || !fs.existsSync(target)) {
+      return { ok: false, code: 'LOGS_NOT_FOUND' };
+    }
+    const err = await shell.openPath(target);
+    return { ok: !err, error: err || null };
+  });
+
+  ipcMain.handle('open-install-dir', async () => {
+    const dir = getLauncherInstallDir();
+    const err = await shell.openPath(dir);
+    return { ok: !err, error: err || null };
+  });
+
+  ipcMain.handle('launch-uninstaller', () => {
+    const installDir = getLauncherInstallDir();
+    const uninstaller = path.join(installDir, 'Uninstall ASTRO Launcher.exe');
+    if (!fs.existsSync(uninstaller)) {
+      return { ok: false, code: 'UNINSTALLER_NOT_FOUND' };
+    }
+    const child = spawn(uninstaller, [], {
+      cwd: installDir,
+      detached: true,
+      stdio: 'ignore'
+    });
+    child.unref();
+    return { ok: true };
   });
 
   ipcMain.handle('connect-fivem', async (_event, address) => {

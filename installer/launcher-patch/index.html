@@ -49,18 +49,68 @@
      <div class="settings-card">
        <label data-i18n="languageLabel">Sprache des Launchers</label>
        <select id="languageSelect" class="language-select"><option value="de">🇩🇪 Deutsch</option><option value="en">🇬🇧 English</option></select>
-       <button class="save-btn" id="saveLanguage" data-i18n="save">SPEICHERN</button>
-       <p data-i18n="languageHint">Die Sprache wird lokal im Launcher gespeichert.</p>
+       <label class="sub-label" data-i18n="defaultServerLabel">Schnellstart-Server</label>
+       <select id="defaultServerSelect" class="language-select">
+         <option value="last" data-i18n="defaultServerLast">Zuletzt besuchter Server</option>
+         <option value="de">Server #1 | DE</option>
+         <option value="en">Server #1 | EN</option>
+       </select>
+       <div class="setting-toggles">
+         <label class="toggle-row">
+           <span class="toggle-copy"><strong data-i18n="minimizeOnLaunchLabel">Nach Spielstart minimieren</strong><small data-i18n="minimizeOnLaunchHint">Minimiert den Launcher automatisch beim Verbinden.</small></span>
+           <input type="checkbox" id="minimizeOnLaunchToggle" class="toggle-input">
+           <span class="toggle-slider"></span>
+         </label>
+         <label class="toggle-row">
+           <span class="toggle-copy"><strong data-i18n="openAtLoginLabel">Mit Windows starten</strong><small data-i18n="openAtLoginHint">Startet den ASTRO Launcher automatisch beim Anmelden.</small></span>
+           <input type="checkbox" id="openAtLoginToggle" class="toggle-input">
+           <span class="toggle-slider"></span>
+         </label>
+       </div>
      </div>
+
      <div class="settings-card">
        <div class="update-header-row"><label data-i18n="updatesLabel">Auto-Updater</label><span class="version-badge settings-ver" id="settingsVersionBadge">v1.0</span></div>
        <div class="update-status-box" id="updateStatusText" data-i18n="updateIdle">Prüft automatisch beim Start auf neue Updates.</div>
        <div class="update-progress-track" id="updateProgressTrack" aria-hidden="true"><div class="update-progress-fill" id="updateProgressFill"></div></div>
-       <button class="save-btn" id="settingsUpdateBtn" type="button" data-i18n="checkUpdates">Update suchen</button>
+       <label class="toggle-row compact-toggle">
+         <span class="toggle-copy"><strong data-i18n="autoCheckLabel">Automatisch beim Start prüfen</strong><small data-i18n="autoCheckHint">Sucht bei jedem Launcher-Start still nach Updates.</small></span>
+         <input type="checkbox" id="autoCheckUpdatesToggle" class="toggle-input" checked>
+         <span class="toggle-slider"></span>
+       </label>
+       <div class="settings-actions">
+         <button class="save-btn" id="settingsUpdateBtn" type="button" data-i18n="checkUpdates">Update suchen</button>
+       </div>
+     </div>
+
+     <div class="settings-card">
+       <div class="update-header-row">
+         <label data-i18n="fivemLabel">FiveM-Verwaltung &amp; Support</label>
+         <span class="status-pill" id="fivemStatusPill">Prüfe …</span>
+       </div>
+       <div class="path-box" id="fivemPathText">–</div>
+       <div class="cache-meta" id="fivemCacheText">Cache: –</div>
+       <div class="settings-actions">
+         <button class="ghost-btn" id="browseFiveMBtn" type="button" data-i18n="browseFiveM">Pfad wählen</button>
+         <button class="ghost-btn" id="resetFiveMBtn" type="button" data-i18n="resetFiveM" style="display:none">Zurücksetzen</button>
+         <button class="ghost-btn" id="openFiveMFolderBtn" type="button" data-i18n="openFiveMFolder">Ordner öffnen</button>
+         <button class="ghost-btn" id="openFiveMLogsBtn" type="button" data-i18n="openFiveMLogs">Logs öffnen</button>
+         <button class="save-btn" id="clearCacheBtn" type="button" data-i18n="clearCache">Cache leeren</button>
+       </div>
+     </div>
+
+     <div class="settings-card">
+       <label data-i18n="systemLabel">Installation &amp; System</label>
+       <div class="path-box" id="installDirText">–</div>
+       <p class="compact-hint" data-i18n="systemHint">Hier liegen die lokalen Dateien des ASTRO Launchers.</p>
+       <div class="settings-actions">
+         <button class="ghost-btn" id="openInstallDirBtn" type="button" data-i18n="openInstallDir">Installationsordner öffnen</button>
+         <button class="danger-btn" id="uninstallBtn" type="button" data-i18n="uninstallLauncher" style="display:none">Deinstallieren</button>
+       </div>
      </div>
    </div>
  </section>
 </main></div>
-<div class="modal-backdrop" id="fivemModal" aria-hidden="true"><div class="modal-card"><div class="modal-icon">!</div><h2 id="fivemModalTitle">FiveM wurde nicht gefunden</h2><p id="fivemModalText"></p><div class="modal-actions"><button class="modal-secondary" id="fivemClose">Schließen</button><button class="modal-primary" id="fivemDownload">FiveM herunterladen</button></div></div></div>
+<div class="modal-backdrop" id="fivemModal" aria-hidden="true"><div class="modal-card"><div class="modal-icon">!</div><h2 id="fivemModalTitle">FiveM wurde nicht gefunden</h2><p id="fivemModalText"></p><div class="modal-actions"><button class="modal-secondary" id="fivemClose">Schließen</button><button class="modal-secondary" id="fivemPickPath">Pfad wählen</button><button class="modal-primary" id="fivemDownload">FiveM herunterladen</button></div></div></div>
 <div class="toast" id="toast"></div><script src="renderer.js"></script>
 </body></html>

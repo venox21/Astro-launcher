@@ -1,4 +1,13 @@
 let config = {};
+let launcherSettings = {
+  customFiveMPath: '',
+  minimizeOnLaunch: false,
+  autoCheckUpdates: true,
+  defaultServer: 'last',
+  openAtLogin: false,
+  installDir: '',
+  canUninstall: false
+};
 let language = localStorage.getItem('astroLanguage') || 'de';
 let lastServer = localStorage.getItem('astroLastServer') || 'de';
 let toastTimer = null;
@@ -26,14 +35,44 @@ const T = {
     guide: 'KURZLEITFADEN ZUM SPIEL',
     watchVideo: 'Video ansehen',
     latestUpdates: 'NEUESTE UPDATES',
-    languageLabel: 'Sprache des Launchers',
-    save: 'SPEICHERN',
-    languageHint: 'Die Sprache wird lokal im Launcher gespeichert.',
+    languageLabel: 'Sprache & Verhalten',
+    defaultServerLabel: 'Schnellstart-Server',
+    defaultServerLast: 'Zuletzt besuchter Server',
+    minimizeOnLaunchLabel: 'Nach Spielstart minimieren',
+    minimizeOnLaunchHint: 'Minimiert den Launcher automatisch beim Verbinden.',
+    openAtLoginLabel: 'Mit Windows starten',
+    openAtLoginHint: 'Startet den ASTRO Launcher automatisch beim Anmelden.',
+    autoCheckLabel: 'Automatisch beim Start prüfen',
+    autoCheckHint: 'Sucht bei jedem Launcher-Start still nach Updates.',
+    fivemLabel: 'FiveM-Verwaltung & Support',
+    browseFiveM: 'Pfad wählen',
+    resetFiveM: 'Zurücksetzen',
+    openFiveMFolder: 'Ordner öffnen',
+    openFiveMLogs: 'Logs öffnen',
+    clearCache: 'Cache leeren',
+    clearingCache: 'Leere …',
+    systemLabel: 'Installation & System',
+    systemHint: 'Hier liegen die lokalen Dateien des ASTRO Launchers.',
+    openInstallDir: 'Installationsordner öffnen',
+    uninstallLauncher: 'Deinstallieren',
+    fivemFound: 'Gefunden',
+    fivemMissingPill: 'Nicht gefunden',
+    fivemPathMissing: 'Kein FiveM-Pfad gefunden – bitte manuell wählen oder installieren.',
+    cacheLabel: 'Bereinigbarer Cache: {mb} MB',
+    cacheEmpty: 'Bereinigbarer Cache: 0 MB (sauber)',
+    cacheCleared: 'FiveM-Cache geleert ({mb} MB entfernt).',
+    cacheRunning: 'Bitte schließe zuerst FiveM, bevor du den Cache leerst.',
+    cacheNoDir: 'Kein FiveM-Ordner zum Bereinigen gefunden.',
+    pathSaved: 'FiveM-Pfad gespeichert.',
+    pathReset: 'Automatische FiveM-Erkennung aktiviert.',
+    logsMissing: 'Noch keine FiveM-Logs vorhanden.',
+    folderMissing: 'FiveM-Ordner wurde nicht gefunden.',
+    settingsSaved: 'Einstellung gespeichert.',
     saved: 'Sprache gespeichert.',
     connecting: 'Prüfe FiveM und verbinde …',
     started: 'FiveM wird gestartet …',
     missing: 'FiveM wurde nicht gefunden',
-    missingText: 'Bitte installiere FiveM und starte es einmal. Danach kannst du dich direkt mit ASTRO verbinden.',
+    missingText: 'Bitte installiere FiveM oder wähle unten den Pfad zu deiner FiveM.exe aus.',
     close: 'Schließen',
     download: 'FiveM herunterladen',
     wikiPlaceholder: 'Hier kannst du später Regeln, Jobs und Server-Infos anzeigen.',
@@ -71,14 +110,44 @@ const T = {
     guide: 'QUICK GUIDE',
     watchVideo: 'Watch video',
     latestUpdates: 'LATEST UPDATES',
-    languageLabel: 'Launcher language',
-    save: 'SAVE',
-    languageHint: 'The language is saved locally in the launcher.',
+    languageLabel: 'Language & Behavior',
+    defaultServerLabel: 'Quick-launch server',
+    defaultServerLast: 'Last visited server',
+    minimizeOnLaunchLabel: 'Minimize on game launch',
+    minimizeOnLaunchHint: 'Automatically minimizes the launcher when connecting.',
+    openAtLoginLabel: 'Start with Windows',
+    openAtLoginHint: 'Launches ASTRO Launcher automatically at sign-in.',
+    autoCheckLabel: 'Check automatically on startup',
+    autoCheckHint: 'Quietly checks for updates when the launcher opens.',
+    fivemLabel: 'FiveM & Support Tools',
+    browseFiveM: 'Choose path',
+    resetFiveM: 'Reset',
+    openFiveMFolder: 'Open folder',
+    openFiveMLogs: 'Open logs',
+    clearCache: 'Clear cache',
+    clearingCache: 'Clearing …',
+    systemLabel: 'Installation & System',
+    systemHint: 'Local installation directory of ASTRO Launcher.',
+    openInstallDir: 'Open install folder',
+    uninstallLauncher: 'Uninstall',
+    fivemFound: 'Found',
+    fivemMissingPill: 'Not found',
+    fivemPathMissing: 'No FiveM path found – choose FiveM.exe manually or install FiveM.',
+    cacheLabel: 'Clearable cache: {mb} MB',
+    cacheEmpty: 'Clearable cache: 0 MB (clean)',
+    cacheCleared: 'FiveM cache cleared ({mb} MB freed).',
+    cacheRunning: 'Please close FiveM first before clearing the cache.',
+    cacheNoDir: 'No FiveM folder found to clear.',
+    pathSaved: 'FiveM path saved.',
+    pathReset: 'Automatic FiveM detection restored.',
+    logsMissing: 'No FiveM logs found yet.',
+    folderMissing: 'FiveM folder was not found.',
+    settingsSaved: 'Setting saved.',
     saved: 'Language saved.',
     connecting: 'Checking FiveM and connecting …',
     started: 'FiveM is starting …',
     missing: 'FiveM was not found',
-    missingText: 'Please install FiveM and start it once. You can then connect directly to ASTRO.',
+    missingText: 'Please install FiveM or select the path to your FiveM.exe below.',
     close: 'Close',
     download: 'Download FiveM',
     wikiPlaceholder: 'Rules, jobs and server information can be shown here later.',
@@ -121,6 +190,7 @@ function applyLanguage() {
   $('#fivemModalTitle').textContent = t('missing');
   $('#fivemModalText').textContent = t('missingText');
   $('#fivemClose').textContent = t('close');
+  $('#fivemPickPath').textContent = t('browseFiveM');
   $('#fivemDownload').textContent = t('download');
   if ($('#minBtn')) $('#minBtn').title = t('minimizeTip');
   if ($('#closeBtn')) $('#closeBtn').title = t('closeTip');
@@ -141,6 +211,7 @@ function showPage(p) {
   $$('.nav-item[data-page]').forEach(b => b.classList.toggle('active', b.dataset.page === p));
   $$('.page').forEach(x => x.classList.remove('active'));
   $('#page-' + p)?.classList.add('active');
+  if (p === 'settings') refreshFiveMStatus();
 }
 
 function servers() {
@@ -156,12 +227,23 @@ function updateLastServer() {
   $('#lastFlag').src = lastServer === 'en' ? 'assets/flag-gb.svg' : 'assets/flag-de.svg';
 }
 
+function getHeroServerKey() {
+  const def = launcherSettings.defaultServer || 'last';
+  return def === 'de' || def === 'en' ? def : lastServer;
+}
+
 async function connect(key) {
   const s = servers()[key];
   if (!s?.address) {
     toast('No server address configured.');
     return;
   }
+  const fiveM = await window.astro.checkFiveMInstalled();
+  if (!fiveM.installed) {
+    showModal();
+    return;
+  }
+
   lastServer = key;
   localStorage.setItem('astroLastServer', key);
   updateLastServer();
@@ -172,6 +254,9 @@ async function connect(key) {
     else toast(r.error || 'FiveM connection failed.');
   } else {
     toast(t('started'));
+    if (launcherSettings.minimizeOnLaunch) {
+      setTimeout(() => window.astro.minimize(), 450);
+    }
   }
 }
 
@@ -243,6 +328,42 @@ function updateVersionDisplays(ver) {
   if ($('#settingsVersionBadge')) $('#settingsVersionBadge').textContent = label;
 }
 
+function renderFiveMStatus(status) {
+  const pill = $('#fivemStatusPill');
+  const pathBox = $('#fivemPathText');
+  const cacheText = $('#fivemCacheText');
+  const resetBtn = $('#resetFiveMBtn');
+  const openFolderBtn = $('#openFiveMFolderBtn');
+  const openLogsBtn = $('#openFiveMLogsBtn');
+  const clearBtn = $('#clearCacheBtn');
+  if (!pill || !pathBox || !cacheText) return;
+
+  pill.classList.remove('ok', 'err');
+  pill.classList.add(status.installed ? 'ok' : 'err');
+  pill.textContent = t(status.installed ? 'fivemFound' : 'fivemMissingPill');
+  pathBox.textContent = status.path || t('fivemPathMissing');
+  pathBox.title = status.path || '';
+
+  const mb = Number(status.cacheMb || 0);
+  cacheText.textContent = mb > 0 ? t('cacheLabel').replace('{mb}', String(mb)) : t('cacheEmpty');
+
+  if (resetBtn) resetBtn.style.display = status.customPath ? 'inline-flex' : 'none';
+  if (openFolderBtn) openFolderBtn.disabled = !status.installed && !status.appDir;
+  if (openLogsBtn) openLogsBtn.disabled = !status.installed && !status.appDir;
+  if (clearBtn) clearBtn.disabled = !status.installed && !status.appDir;
+}
+
+async function refreshFiveMStatus() {
+  const status = await window.astro.checkFiveMInstalled();
+  renderFiveMStatus(status);
+  return status;
+}
+
+async function updateSetting(patch, silentToast = false) {
+  launcherSettings = { ...launcherSettings, ...(await window.astro.saveSettings(patch)) };
+  if (!silentToast) toast(t('settingsSaved'));
+}
+
 window.astro.onUpdateStatus(d => {
   if (!d) return;
   const ver = cleanVersionLabel(d.version);
@@ -308,11 +429,27 @@ async function triggerManualUpdateCheck() {
 
 async function init() {
   config = await window.astro.getConfig();
+  launcherSettings = await window.astro.getSettings();
+
   updateVersionDisplays(config.version || '1.0');
   $('#deServerName').textContent = servers().de.name;
   $('#enServerName').textContent = servers().en.name;
+
+  if ($('#defaultServerSelect')) $('#defaultServerSelect').value = launcherSettings.defaultServer || 'last';
+  if ($('#minimizeOnLaunchToggle')) $('#minimizeOnLaunchToggle').checked = Boolean(launcherSettings.minimizeOnLaunch);
+  if ($('#openAtLoginToggle')) $('#openAtLoginToggle').checked = Boolean(launcherSettings.openAtLogin);
+  if ($('#autoCheckUpdatesToggle')) $('#autoCheckUpdatesToggle').checked = launcherSettings.autoCheckUpdates !== false;
+  if ($('#installDirText')) {
+    $('#installDirText').textContent = launcherSettings.installDir || '–';
+    $('#installDirText').title = launcherSettings.installDir || '';
+  }
+  if ($('#uninstallBtn')) {
+    $('#uninstallBtn').style.display = launcherSettings.canUninstall ? 'inline-flex' : 'none';
+  }
+
   updateLastServer();
   applyLanguage();
+  refreshFiveMStatus();
 
   $$('.nav-item[data-page]').forEach(b => (b.onclick = () => showPage(b.dataset.page)));
   $('#deServerCard').onclick = () => connect('de');
@@ -321,23 +458,76 @@ async function init() {
   $('#lastServerCard').onkeydown = e => {
     if (e.key === 'Enter' || e.key === ' ') connect(lastServer);
   };
+
   window.astro.onWindowState?.(s => applyWindowState(Boolean(s && s.maximized)));
   $('#fullscreenBtn').onclick = () => window.astro.toggleMaximize();
   $('#minBtn').onclick = () => window.astro.minimize();
   $('#closeBtn').onclick = () => window.astro.close();
   $('#checkUpdateBtn').onclick = triggerManualUpdateCheck;
   $('#settingsUpdateBtn').onclick = triggerManualUpdateCheck;
+
   $('#languageSelect').onchange = e => {
     language = e.target.value;
     localStorage.setItem('astroLanguage', language);
     applyLanguage();
-  };
-  $('#saveLanguage').onclick = () => {
-    language = $('#languageSelect').value;
-    localStorage.setItem('astroLanguage', language);
-    applyLanguage();
+    refreshFiveMStatus();
     toast(t('saved'));
   };
+  $('#defaultServerSelect').onchange = e => updateSetting({ defaultServer: e.target.value });
+  $('#minimizeOnLaunchToggle').onchange = e => updateSetting({ minimizeOnLaunch: e.target.checked });
+  $('#openAtLoginToggle').onchange = e => updateSetting({ openAtLogin: e.target.checked });
+  $('#autoCheckUpdatesToggle').onchange = e => updateSetting({ autoCheckUpdates: e.target.checked });
+
+  const pickFiveMPath = async () => {
+    const res = await window.astro.browseFiveMPath();
+    if (res && res.status) renderFiveMStatus(res.status);
+    if (res && !res.canceled) {
+      toast(t('pathSaved'));
+      hideModal();
+    }
+  };
+
+  $('#browseFiveMBtn').onclick = pickFiveMPath;
+  $('#fivemPickPath').onclick = pickFiveMPath;
+
+  $('#resetFiveMBtn').onclick = async () => {
+    const status = await window.astro.resetFiveMPath();
+    renderFiveMStatus(status);
+    toast(t('pathReset'));
+  };
+
+  $('#openFiveMFolderBtn').onclick = async () => {
+    const res = await window.astro.openFiveMFolder();
+    if (!res.ok) toast(t('folderMissing'));
+  };
+
+  $('#openFiveMLogsBtn').onclick = async () => {
+    const res = await window.astro.openFiveMLogs();
+    if (!res.ok) toast(t('logsMissing'));
+  };
+
+  $('#clearCacheBtn').onclick = async () => {
+    const btn = $('#clearCacheBtn');
+    btn.disabled = true;
+    btn.textContent = t('clearingCache');
+    try {
+      const res = await window.astro.clearFiveMCache();
+      if (res.status) renderFiveMStatus(res.status);
+      if (!res.ok) {
+        if (res.code === 'FIVEM_RUNNING') toast(t('cacheRunning'));
+        else toast(t('cacheNoDir'));
+      } else {
+        toast(t('cacheCleared').replace('{mb}', String(res.freedMb || 0)));
+      }
+    } finally {
+      btn.textContent = t('clearCache');
+      await refreshFiveMStatus();
+    }
+  };
+
+  $('#openInstallDirBtn').onclick = () => window.astro.openInstallDir();
+  $('#uninstallBtn').onclick = () => window.astro.launchUninstaller();
+
   $('#discordBtn').onclick = () => window.astro.openExternal(config.discord || 'https://discord.gg/hTQmhY35V2');
   $('#forumBtn').onclick = () => window.astro.openExternal(config.forum || 'https://gta5astro.eu/');
   $('#topupBtn').onclick = () => toast(t('topupSoon'));
@@ -345,7 +535,7 @@ async function init() {
     config.website && config.website !== 'https://example.com'
       ? window.astro.openExternal(config.website)
       : toast(t('videoMissing'));
-  $('#heroCard').onclick = () => connect(lastServer);
+  $('#heroCard').onclick = () => connect(getHeroServerKey());
   $('#fivemClose').onclick = hideModal;
   $('#fivemDownload').onclick = () => window.astro.openExternal('https://fivem.net/');
   $('#fivemModal').onclick = e => {
