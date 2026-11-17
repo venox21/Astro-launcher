@@ -238,7 +238,7 @@ window.astro.onUpdateStatus(d => {
     setDownloadProgress(0, false);
     const msg = t('noUpdate').replace('{v}', ver);
     setUpdateStatusText(msg, 'ok');
-    toast(msg);
+    if (d.manual) toast(msg);
     return;
   }
 
@@ -275,7 +275,7 @@ window.astro.onUpdateStatus(d => {
     setDownloadProgress(0, false);
     const msg = t('updateError').replace('{m}', d.message || 'Unknown error');
     setUpdateStatusText(msg, 'err');
-    toast(msg);
+    if (d.manual) toast(msg);
   }
 });
 
