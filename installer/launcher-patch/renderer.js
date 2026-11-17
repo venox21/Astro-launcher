@@ -41,13 +41,17 @@ const T = {
     videoMissing: 'Video-Link noch nicht konfiguriert.',
     checkUpdates: 'Update suchen',
     checkingUpdates: 'Suche läuft …',
-    updatesLabel: 'Auto-Updater (GitHub)',
+    updatesLabel: 'Auto-Updater',
     updateIdle: 'Prüft automatisch beim Start auf neue Updates.',
-    noUpdate: 'Kein neues Update auf GitHub verfügbar (v{v} ist aktuell).',
+    noUpdate: 'Du nutzt bereits die aktuelle Version (v{v}).',
     updateFound: 'Update v{v} gefunden – wird heruntergeladen …',
     updateDownloading: 'Update v{v} wird heruntergeladen: {p}%',
     updateDownloaded: 'Update v{v} bereit – wird installiert …',
-    updateError: 'Update-Prüfung fehlgeschlagen: {m}'
+    updateError: 'Update-Prüfung fehlgeschlagen: {m}',
+    minimizeTip: 'Minimieren',
+    maximizeTip: 'Maximieren',
+    restoreTip: 'Wiederherstellen',
+    closeTip: 'Schließen'
   },
   en: {
     play: 'Play',
@@ -82,17 +86,30 @@ const T = {
     videoMissing: 'Video link is not configured yet.',
     checkUpdates: 'Check for updates',
     checkingUpdates: 'Checking …',
-    updatesLabel: 'Auto-Updater (GitHub)',
-    updateIdle: 'Automatically checks GitHub on startup.',
-    noUpdate: 'No new update on GitHub (v{v} is up to date).',
+    updatesLabel: 'Auto-Updater',
+    updateIdle: 'Automatically checks for updates on startup.',
+    noUpdate: 'You are already on the latest version (v{v}).',
     updateFound: 'Update v{v} found – downloading …',
     updateDownloading: 'Downloading update v{v}: {p}%',
     updateDownloaded: 'Update v{v} ready – installing …',
-    updateError: 'Update check failed: {m}'
+    updateError: 'Update check failed: {m}',
+    minimizeTip: 'Minimize',
+    maximizeTip: 'Maximize',
+    restoreTip: 'Restore',
+    closeTip: 'Close'
   }
 };
 
 const t = k => T[language][k] || T.de[k] || k;
+
+function applyWindowState(maximized) {
+  document.body.classList.toggle('maximized', Boolean(maximized));
+  const maxBtn = $('#fullscreenBtn');
+  if (maxBtn) {
+    maxBtn.textContent = maximized ? '❐' : '□';
+    maxBtn.title = t(maximized ? 'restoreTip' : 'maximizeTip');
+  }
+}
 
 function applyLanguage() {
   $$('[data-i18n]').forEach(e => {
@@ -105,6 +122,9 @@ function applyLanguage() {
   $('#fivemModalText').textContent = t('missingText');
   $('#fivemClose').textContent = t('close');
   $('#fivemDownload').textContent = t('download');
+  if ($('#minBtn')) $('#minBtn').title = t('minimizeTip');
+  if ($('#closeBtn')) $('#closeBtn').title = t('closeTip');
+  applyWindowState(document.body.classList.contains('maximized'));
   document.documentElement.lang = language;
   renderNews();
 }
@@ -301,7 +321,8 @@ async function init() {
   $('#lastServerCard').onkeydown = e => {
     if (e.key === 'Enter' || e.key === ' ') connect(lastServer);
   };
-  $('#fullscreenBtn').onclick = () => window.astro.toggleFullscreen();
+  window.astro.onWindowState?.(s => applyWindowState(Boolean(s && s.maximized)));
+  $('#fullscreenBtn').onclick = () => window.astro.toggleMaximize();
   $('#minBtn').onclick = () => window.astro.minimize();
   $('#closeBtn').onclick = () => window.astro.close();
   $('#checkUpdateBtn').onclick = triggerManualUpdateCheck;

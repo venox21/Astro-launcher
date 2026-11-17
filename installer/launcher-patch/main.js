@@ -40,6 +40,7 @@ function createWindow() {
     minHeight: 680,
     frame: false,
     resizable: true,
+    maximizable: true,
     backgroundColor: '#050a0e',
     icon: path.join(__dirname, 'assets', 'astro.ico'),
     webPreferences: {
@@ -49,7 +50,16 @@ function createWindow() {
     }
   });
 
+  mainWindow.on('maximize', () => sendWindowState(true));
+  mainWindow.on('unmaximize', () => sendWindowState(false));
+
   mainWindow.loadFile('index.html');
+}
+
+function sendWindowState(maximized) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('window-state-changed', { maximized });
+  }
 }
 
 function sendUpdateStatus(status, data = {}) {
@@ -172,10 +182,15 @@ app.whenReady().then(() => {
     BrowserWindow.fromWebContents(event.sender)?.close();
   });
 
-  ipcMain.on('window-toggle-fullscreen', event => {
+  const toggleMaximize = event => {
     const win = BrowserWindow.fromWebContents(event.sender);
-    if (win) win.setFullScreen(!win.isFullScreen());
-  });
+    if (!win) return;
+    if (win.isMaximized()) win.unmaximize();
+    else win.maximize();
+  };
+
+  ipcMain.on('window-toggle-maximize', toggleMaximize);
+  ipcMain.on('window-toggle-fullscreen', toggleMaximize);
 
   ipcMain.handle('check-fivem-installed', () => {
     const fiveMPath = findFiveM();

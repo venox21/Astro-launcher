@@ -283,9 +283,9 @@ function createUpdater(deps = {}) {
 
     if (releaseRes.statusCode !== 404) {
       if (releaseRes.statusCode === 403) {
-        throw new Error('GitHub API-Limit erreicht. Bitte später erneut versuchen.');
+        throw new Error('Update-Anfragelimit erreicht. Bitte später erneut versuchen.');
       }
-      throw new Error(`GitHub-Antwort unerwartet (HTTP ${releaseRes.statusCode}).`);
+      throw new Error(`Update-Server antwortete unerwartet (HTTP ${releaseRes.statusCode}).`);
     }
 
     // No published release yet: verify if the repo itself exists and optionally check branch config/version.
@@ -295,7 +295,7 @@ function createUpdater(deps = {}) {
       return { kind: 'repo-not-found' };
     }
     if (repoRes.statusCode !== 200 || !repoRes.json) {
-      throw new Error(`GitHub-Repository konnte nicht geprüft werden (HTTP ${repoRes.statusCode}).`);
+      throw new Error(`Update-Quelle konnte nicht geprüft werden (HTTP ${repoRes.statusCode}).`);
     }
 
     const defaultBranch = repoRes.json.default_branch || 'main';
@@ -339,7 +339,7 @@ function createUpdater(deps = {}) {
         const remote = await inspectRemoteRelease(owner, repo);
 
         if (remote.kind === 'repo-not-found') {
-          const msg = `GitHub-Repository ${owner}/${repo} wurde nicht gefunden oder ist privat.`;
+          const msg = 'Update-Server ist derzeit nicht erreichbar.';
           emit('error', { code: 'REPO_NOT_FOUND', message: msg, version: localVersion });
           return { ok: false, updateAvailable: false, code: 'REPO_NOT_FOUND', error: msg };
         }
@@ -356,14 +356,14 @@ function createUpdater(deps = {}) {
         }
 
         if (remote.kind === 'branch-version') {
-          const msg = `Neue Version v${remoteVersion} im Repo erkannt, aber es existiert noch kein GitHub Release mit Setup-.exe.`;
+          const msg = `Neue Version v${remoteVersion} erkannt, Setup-Paket noch nicht bereit.`;
           emit('error', { code: 'NO_RELEASE_ASSET', message: msg, version: remoteVersion });
           return { ok: false, updateAvailable: true, code: 'NO_RELEASE_ASSET', error: msg };
         }
 
         const asset = selectInstallerAsset(remote.assets);
         if (!asset) {
-          const msg = `Update v${remoteVersion} auf GitHub gefunden, aber keine Installer-.exe im Release angehängt.`;
+          const msg = `Update v${remoteVersion} gefunden, aber kein Installer-Paket angehängt.`;
           emit('error', { code: 'NO_ASSET', message: msg, version: remoteVersion });
           return { ok: false, updateAvailable: true, code: 'NO_ASSET', error: msg };
         }
