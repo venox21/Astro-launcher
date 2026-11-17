@@ -303,7 +303,7 @@ async function init() {
     applyLanguage();
     toast(t('saved'));
   };
-  $('#discordBtn').onclick = () => window.astro.openExternal(config.discord);
+  $('#discordBtn').onclick = () => window.astro.openExternal(config.discord || 'https://discord.gg/hTQmhY35V2');
   $('#topupBtn').onclick = () => toast(t('topupSoon'));
   $('#videoBtn').onclick = () =>
     config.website && config.website !== 'https://example.com'

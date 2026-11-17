@@ -106,7 +106,10 @@ $excludedTopLevel = @(
     'ASTRO Launcher Setup.exe',
     'Uninstall ASTRO Launcher.exe',
     '.git',
-    '.vscode'
+    '.github',
+    '.gitignore',
+    '.vscode',
+    'README.md'
 )
 
 $excludedExtensions = @('.pdb', '.tmp', '.log', '.zip')

@@ -17,7 +17,7 @@ function loadConfig() {
       serverName: 'ASTRO',
       servers: { de: { name: 'Server #1 | DE', address: '127.0.0.1:30120' }, en: { name: 'Server #1 | EN', address: '127.0.0.1:30121' } },
       version: app.getVersion(),
-      discord: '',
+      discord: 'https://discord.gg/hTQmhY35V2',
       website: '',
       news: [],
       update: {
@@ -188,7 +188,11 @@ app.whenReady().then(() => {
   ipcMain.handle('open-external', async (_event, url) => {
     if (!url) return { ok: false };
     try {
-      await shell.openExternal(url);
+      const parsed = new URL(String(url));
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+        return { ok: false, error: 'Unsupported URL protocol.' };
+      }
+      await shell.openExternal(parsed.toString());
       return { ok: true };
     } catch (e) {
       return { ok: false, error: e.message };
